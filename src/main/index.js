@@ -1,11 +1,14 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import path from 'path'
-import fs, { promises } from 'fs'
+import fs from 'fs'
+import { promises as fsPromises } from 'fs'
+
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-import { userAuth } from '../services/tiktok-auth'
+import { userAuth } from '../renderer/src/services/tiktok-auth'
+import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload-,js'
 
 let mainWindow
 
@@ -96,7 +99,7 @@ app.whenReady().then(() => {
       if (!result.canceled && result.filePaths.length > 0) {
         selectedPath = result.filePaths[0]
         console.log(`folder terpilih ${selectedPath}`)
-        const filesInFolder = await fs.promises.readdir(selectedPath)
+        const filesInFolder = await fsPromises.readdir(selectedPath)
         const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
         videoFiles = filesInFolder.filter((file) => {
           const ext = path.extname(file).toLowerCase()
@@ -131,6 +134,36 @@ app.whenReady().then(() => {
     } catch (err) {
       console.error('Gagal membaca file:', err)
       return null
+    }
+  })
+
+  ipcMain.handle('start-tiktok-upload', async (event, payload) => {
+    const { folderPath } = payload || {}
+    if (!folderPath || typeof folderPath !== 'string') {
+      const message = 'Folder path tidak valid atau kosong.'
+      console.error(message)
+      event.sender.send('upload-status-update', {
+        popup: false,
+        success: false,
+        message
+      })
+      return { success: false, message }
+    }
+    try {
+      const result = await tiktokAutoUpload(folderPath)
+      event.sender.send('upload-status-update', {
+        popup: true,
+        success: true,
+        message: `Upload selesai: ${result.uploaded}/${result.total} video berhasil`
+      })
+      return result
+    } catch (error) {
+      console.error(error)
+      event.sender.send('upload-status-update', {
+        popup: false,
+        success: false,
+        message: `eror upload ${error.message}`
+      })
     }
   })
   createWindow()

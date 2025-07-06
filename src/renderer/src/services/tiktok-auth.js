@@ -3,7 +3,7 @@ import { chromium } from 'playwright'
 import { __dirname } from '../utils/esm-path.js'
 import fs from 'fs'
 import { app } from 'electron'
-import { sleep } from '../renderer/src/helper/sleep.js'
+import { sleep } from '../helper/sleep.js'
 
 export const userAuth = async () => {
   const sessionPath = path.join(app.getPath('userData'), 'sessions/user1')

@@ -71,7 +71,6 @@ export default function TiktokDashboard() {
 
     const uploadData = {
       folderPath,
-      addWatermark,
       watermarkText: addWatermark ? watermarkText : ''
     }
 
@@ -123,7 +122,7 @@ export default function TiktokDashboard() {
         </div>
 
         {videoFiles.length > 0 && (
-          <div className="grid grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-7 gap-6 mb-6">
             {videoFiles.map((file, index) => (
               <div key={index} className="border rounded shadow overflow-hidden">
                 <video

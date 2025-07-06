@@ -1,0 +1,24 @@
+import OpenAI from 'openai'
+
+// Initialize client with SumoPod AI
+const openai = new OpenAI({
+  apiKey: 'sk-jBe-gb78y0ZA2HnfrPty9A',
+  baseURL: 'https://ai.sumopod.com/v1'
+})
+async function main() {
+  try {
+    // Make a chat completion request
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: 'Say hello in a creative way alwyas using bahasa' }],
+      max_tokens: 150,
+      temperature: 0.7
+    })
+
+    console.log(response.choices)
+  } catch (error) {
+    console.error('Error:', error)
+  }
+}
+
+main()
