@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FaTiktok, FaFolderOpen, FaCloudUploadAlt } from 'react-icons/fa'
 import SuccessNotification from '../components/succesNotifications'
 
@@ -10,6 +10,8 @@ export default function TiktokDashboard() {
   const [uploadStatusMessage, setUploadStatusMessage] = useState('')
   const [uploadStatusType, setUploadStatusType] = useState('info')
   const [showPopupNotification, setShowPopupNotification] = useState(false)
+  const [logs, setLogs] = useState([])
+  const logContainerRef = useRef(null)
 
   useEffect(() => {
     if (window.electron && window.electron.ipcRenderer) {
@@ -19,16 +21,30 @@ export default function TiktokDashboard() {
         setShowPopupNotification(!!response.popup)
       }
 
-      const unsubscribe = window.electron.ipcRenderer.on(
+      const handleUploadLog = (_event, { level, message }) => {
+        console.log('📦 Log diterima:', level, message)
+        setLogs((prev) => [...prev, { level, message }])
+      }
+
+      const unsubscribeStatus = window.electron.ipcRenderer.on(
         'upload-status-update',
         handleUploadStatusUpdate
       )
+      const unsubscribeLog = window.electron.ipcRenderer.on('tiktok-upload-log', handleUploadLog)
 
+      // Cleanup kedua listener saat komponen di-unmount
       return () => {
-        if (unsubscribe) unsubscribe()
+        if (unsubscribeStatus) unsubscribeStatus()
+        if (unsubscribeLog) unsubscribeLog()
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
+    }
+  }, [logs])
 
   const handleSelectFolder = async () => {
     setUploadStatusMessage('Membuka dialog pemilihan folder...')
@@ -197,6 +213,34 @@ export default function TiktokDashboard() {
             {uploadStatusMessage}
           </p>
         )}
+
+        <div
+          ref={logContainerRef}
+          className="mt-6 bg-white text-black p-4 rounded-lg max-h-64 overflow-y-auto font-mono text-sm drop-shadow-sm"
+        >
+          {logs.length === 0 ? (
+            <p className="text-green-600">Belum ada log.</p>
+          ) : (
+            logs.map((log, index) => (
+              <div key={index} className={`mb-1`}>
+                <span
+                  className={
+                    log.level === 'error'
+                      ? 'text-red-400'
+                      : log.level === 'success'
+                        ? 'text-green-400'
+                        : log.level === 'start'
+                          ? 'text-yellow-400'
+                          : 'text-blue-400'
+                  }
+                >
+                  [{log.level.toUpperCase()}]
+                </span>{' '}
+                {log.message}
+              </div>
+            ))
+          )}
+        </div>
 
         {showPopupNotification && (
           <SuccessNotification

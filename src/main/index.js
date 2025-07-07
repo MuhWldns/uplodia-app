@@ -8,7 +8,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
 import { userAuth } from '../renderer/src/services/tiktok-auth'
-import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload-,js'
+import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload.js'
 
 let mainWindow
 
@@ -150,7 +150,7 @@ app.whenReady().then(() => {
       return { success: false, message }
     }
     try {
-      const result = await tiktokAutoUpload(folderPath)
+      const result = await tiktokAutoUpload(folderPath, event.sender)
       event.sender.send('upload-status-update', {
         popup: true,
         success: true,
