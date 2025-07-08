@@ -4,6 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import chalk from 'chalk'
 import { __dirname } from '../utils/esm-path'
+import { error } from 'console'
 
 function delay(min, max) {
   return Math.floor(Math.random() * (max - min) + 1 + min)
@@ -33,24 +34,45 @@ const log = (level, message, sender = null) => {
   }
 }
 
-export const tiktokAutoUpload = async (folderPath, sender) => {
-  const profilePath = path.join(app.getPath('userData'), 'sessions/user1')
-  console.log(profilePath)
+export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
+  if (!selectedSession) {
+    throw new error('Session tidak dipilih')
+  }
+  const profilePath = path.join(
+    app.getPath('userData'),
+    `sessions/${selectedSession}/storageState.json`
+  )
+  console.log(`menggunakan session ${selectedSession} di path ${profilePath}`)
+  if (!fs.existsSync(profilePath)) {
+    throw new Error(`File storageState.json tidak ditemukan untuk session: ${selectedSession}`)
+  }
+  const storageState = JSON.parse(fs.readFileSync(profilePath, 'utf-8'))
+  if (!storageState.cookies || !storageState.origins) {
+    throw new Error(`File storageState.json tidak valid untuk session: ${selectedSession}`)
+  }
 
   const videoFiles = fs.readdirSync(folderPath).filter((file) => file.endsWith('.mp4'))
   if (videoFiles.length === 0) {
     throw new Error('Tidak ada video .mp4 ditemukan di folder')
   }
+  console.log('🧪 storageState keys:', Object.keys(storageState))
+  console.log('🧪 storageState type:', typeof storageState)
 
   log('start', 'Membuka browser...')
-  const browser = await chromium.launchPersistentContext(profilePath, {
+
+  const browser = await chromium.launch({
     headless: false,
-    channel: 'chrome',
-    args: ['--disable-blink-features=AutomationControlled'],
+
     viewport: null
   })
+  console.log('typeof browser:', typeof browser)
+  console.log('typeof browser.newContext:', typeof browser?.newContext)
+  console.log('browser keys:', Object.keys(browser))
+  const context = await browser.newContext({ storageState: profilePath })
+  console.log('typeof context:', typeof context)
+  console.log('context.newPage is function?', typeof context.newPage)
 
-  const page = await browser.newPage()
+  const page = await context.newPage()
   await page.goto('https://www.tiktok.com/upload', {
     waitUntil: 'domcontentloaded',
     timeout: 60000

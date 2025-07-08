@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FaTiktok, FaFolderOpen, FaCloudUploadAlt } from 'react-icons/fa'
 import SuccessNotification from '../components/succesNotifications'
+import { Link } from 'react-router-dom'
+import AddAccount from '../components/addAccount'
+import SessionSelector from '../components/SessionSelector'
 
 export default function TiktokDashboard() {
+  const [refreshSession, setRefreshSession] = useState(false)
   const [folderPath, setFolderPath] = useState('')
   const [videoFiles, setVideoFiles] = useState([])
   const [addWatermark, setAddWatermark] = useState(false)
@@ -10,9 +14,21 @@ export default function TiktokDashboard() {
   const [uploadStatusMessage, setUploadStatusMessage] = useState('')
   const [uploadStatusType, setUploadStatusType] = useState('info')
   const [showPopupNotification, setShowPopupNotification] = useState(false)
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false)
+  const [account, setAccounts] = useState('')
+  const [selectedSession, setSelectedSession] = useState('')
   const [logs, setLogs] = useState([])
   const logContainerRef = useRef(null)
 
+  const handleAddAccount = (alias) => {
+    setAccounts((prevAccounts) => [...prevAccounts, alias])
+    setRefreshSession((prev) => !prev)
+    setShowAddAccountModal(false)
+  }
+  const handleSessionSelected = (session) => {
+    setSelectedSession(session)
+    console.log(`Session yang dipilih: ${session}`)
+  }
   useEffect(() => {
     if (window.electron && window.electron.ipcRenderer) {
       const handleUploadStatusUpdate = (response) => {
@@ -75,6 +91,11 @@ export default function TiktokDashboard() {
   }
 
   const handleStartUpload = async () => {
+    if (!selectedSession) {
+      setUploadStatusMessage('Mohon pilih session terlebih dahulu.')
+      setUploadStatusType('error')
+      return
+    }
     if (!folderPath) {
       setUploadStatusMessage('Mohon pilih folder video terlebih dahulu.')
       setUploadStatusType('error')
@@ -87,7 +108,8 @@ export default function TiktokDashboard() {
 
     const uploadData = {
       folderPath,
-      watermarkText: addWatermark ? watermarkText : ''
+      watermarkText: addWatermark ? watermarkText : '',
+      selectedSession
     }
 
     try {
@@ -107,8 +129,28 @@ export default function TiktokDashboard() {
             <FaTiktok className="text-2xl text-gray-800" />
             <h1 className="text-2xl font-bold text-gray-800">TikTok Uploader</h1>
           </div>
+          <div className="flex items-center space-x-4">
+            <SessionSelector onSessionSelected={handleSessionSelected} refreshed={refreshSession} />
+            <button
+              onClick={() => setShowAddAccountModal(true)}
+              className="bg-blue-600 p-2 m-1 rounded-xl text-white font-semibold w-17 h-12"
+            >
+              Tambah akun
+            </button>
+          </div>
         </div>
       </nav>
+      {showAddAccountModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            {/* <h2 className="text-xl font-semibold text-gray-800 mb-4">Tambah Akun TikTok</h2> */}
+            <AddAccount
+              onAccountAdded={handleAddAccount}
+              onClose={() => setShowAddAccountModal(false)}
+            />
+          </div>
+        </div>
+      )}
 
       <main className="bg-white p-8 rounded-lg shadow-xl w-full max-w-5xl">
         <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">
@@ -136,6 +178,9 @@ export default function TiktokDashboard() {
             <p className="mt-2 text-xs text-gray-500">Video akan diupload dari: {folderPath}</p>
           )}
         </div>
+        <Link to={'/'} className="text-black text-2xl">
+          Balik dulu
+        </Link>
 
         {videoFiles.length > 0 && (
           <div className="grid grid-cols-7 gap-6 mb-6">

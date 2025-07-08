@@ -7,6 +7,7 @@ export default function TiktokLoginDashboard() {
   const [loginStatusType, setLoginStatusType] = useState('')
   const [showNotification, setShowNotification] = useState(false)
   const navigate = useNavigate()
+  const [inputAlias, setInputAlias] = useState('')
   console.log('TiktokLoginDashboard dirender. showNotification saat ini:', showNotification) // LOG A
 
   useEffect(() => {
@@ -35,20 +36,30 @@ export default function TiktokLoginDashboard() {
   }, [navigate])
 
   const handleStartLogin = () => {
-    setLoginStatusMessage('memulai proses login...')
+    if (!inputAlias.trim()) {
+      setLoginStatusMessage('Alias tidak boleh kosong.')
+      setLoginStatusType('error')
+      setShowNotification(false)
+      return
+    }
+
+    setLoginStatusMessage('Memulai proses login...')
     setLoginStatusType('info')
     setShowNotification(false)
     console.log('LOG D: handleStartLogin dipanggil. showNotification diset ke FALSE.') // LOG D
+
     if (window.electron && window.electron.ipcRenderer) {
       window.electron.ipcRenderer
-        .invoke('start-log')
+        .invoke('start-log', { alias: inputAlias }) // Kirim alias ke proses utama
         .then((res) => {
           console.log('LOG E: Invoke start-log selesai, hasil:', res)
           setLoginStatusMessage(res.message)
           setShowNotification(true)
-          setTimeout(() => {
-            navigate('/tiktok-uploader')
-          }, 1500)
+          if (res.success) {
+            setTimeout(() => {
+              navigate('/tiktok-uploader')
+            }, 1500)
+          }
         })
         .catch((err) => {
           console.error('LOG F: Error saat invoke start-log:', err)
@@ -77,10 +88,17 @@ export default function TiktokLoginDashboard() {
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">Kelola Akun TikTok Anda</h2>
-            <p className="text-gray-600 text-sm mb-8">
-              Klik tombol di bawah ini untuk memulai proses login dan menghubungkan akun TikTok
-              Anda.
+            <p className="text-black text-sm mb-8">
+              Masukkan alias untuk akun TikTok Anda, lalu klik tombol di bawah ini untuk memulai
+              proses login.
             </p>
+            <input
+              type="text"
+              placeholder="Masukkan alias akun"
+              value={inputAlias}
+              onChange={(e) => setInputAlias(e.target.value)}
+              className="w-full mb-4 px-4 py-2 border text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md
                        transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
@@ -89,8 +107,17 @@ export default function TiktokLoginDashboard() {
               Klik di sini untuk login akun TikTok Anda
             </button>
 
-            <Link to={'/'} className=" text-blue-600 font-bold py-4 text-sm inline-block">
+            <Link to={'/'} className="text-blue-600 font-bold py-4 text-sm inline-block">
               Kembali
+            </Link>
+            <p className="text-xs text-gray-500 mt-2">
+              Pastikan Anda sudah login untuk melanjutkan.
+            </p>
+            <Link
+              to={'/tiktok-uploader'}
+              className="text-gray-500 font-extrabold py-4 text-sm inline-block"
+            >
+              I Have Session
             </Link>
           </div>
         </main>

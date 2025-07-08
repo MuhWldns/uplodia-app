@@ -9,6 +9,7 @@ import icon from '../../resources/icon.png?asset'
 
 import { userAuth } from '../renderer/src/services/tiktok-auth'
 import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload.js'
+import { getActiveSession } from '../renderer/src/services/get-tiktok-session.js'
 
 let mainWindow
 
@@ -60,10 +61,22 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-  ipcMain.handle('start-log', async (event) => {
+  ipcMain.handle('check-tiktok-session', async () => {
     try {
-      const authen = await userAuth()
+      const session = getActiveSession()
+      return session
+    } catch (error) {
+      console.error('Error saat mendapatkan session aktif:', error)
+      return []
+    }
+  })
+  ipcMain.handle('start-log', async (event, { alias }) => {
+    try {
+      if (!alias || typeof alias !== 'string' || alias.trim() === '') {
+        throw new Error('Alias tidak valid atau kosong.')
+      }
+      console.log(`memulai proses login dengan ${alias}`)
+      const authen = await userAuth(alias)
       if (mainWindow && mainWindow) {
         event.sender.send('tiktok-login-update', {
           success: true,
@@ -73,7 +86,8 @@ app.whenReady().then(() => {
 
         return {
           success: true,
-          message: 'berhasil login',
+          message: 'berhasil login untuk',
+          alias,
           sessionData: authen
         }
       }
@@ -138,7 +152,17 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('start-tiktok-upload', async (event, payload) => {
-    const { folderPath } = payload || {}
+    const { folderPath, selectedSession } = payload || {}
+    if (!selectedSession || typeof selectedSession !== 'string') {
+      const message = 'Session tidak valid atau kosong.'
+      console.error(message)
+      event.sender.send('upload-status-update', {
+        popup: false,
+        success: false,
+        message
+      })
+      return { success: false, message }
+    }
     if (!folderPath || typeof folderPath !== 'string') {
       const message = 'Folder path tidak valid atau kosong.'
       console.error(message)
@@ -149,8 +173,9 @@ app.whenReady().then(() => {
       })
       return { success: false, message }
     }
+
     try {
-      const result = await tiktokAutoUpload(folderPath, event.sender)
+      const result = await tiktokAutoUpload(folderPath, event.sender, selectedSession)
       event.sender.send('upload-status-update', {
         popup: true,
         success: true,
