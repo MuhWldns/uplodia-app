@@ -5,6 +5,8 @@ import fs from 'fs'
 import chalk from 'chalk'
 import { __dirname } from '../utils/esm-path'
 import { error } from 'console'
+import { supabase } from './supabase/SupabaseClient'
+import { getDeviceFingerprint } from './get-device-fingerprint'
 
 function delay(min, max) {
   return Math.floor(Math.random() * (max - min) + 1 + min)
@@ -61,8 +63,8 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
   log('start', 'Membuka browser...')
 
   const browser = await chromium.launch({
-    headless: false,
-
+    headless: true,
+    channel: 'chrome',
     viewport: null
   })
   console.log('typeof browser:', typeof browser)
@@ -87,6 +89,19 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
     log('start', `Upload (${i + 1}/${videoFiles.length}): ${video}`, sender)
 
     try {
+      const fingerprintData = await getDeviceFingerprint()
+      const { data, error } = await supabase.rpc('increment_upload_count', {
+        p_machine_id: fingerprintData.machine_id
+      })
+
+      if (error) {
+        if (error.message.includes('Batas upload harian')) {
+          log('error', 'Limit upload harian (5x) tercapai. Proses dihentikan.', sender)
+          break
+        }
+        throw new Error(error.message)
+      }
+
       await page.click('[data-e2e="select_video_button"]')
       await page.waitForTimeout(delay(1000, 7000))
       await page.setInputFiles('input[type="file"]', fullPath)
