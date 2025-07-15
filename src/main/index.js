@@ -87,15 +87,25 @@ app.whenReady().then(() => {
       if (!fingerprintData) {
         throw new Error('Failed to retrieve device fingerprint.')
       }
+      const { data: existingDevice, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('machine_id', fingerprintData.machine_id)
+        .single()
+
+      // if (fetchError && fetchError.code !== 'PGRST116') {
+      // //   throw new Error(fetchError.message)
+      // // }
+
       const { data, error } = await supabase.rpc('register_user', {
         p_machine_id: fingerprintData.machine_id,
         p_hostname: fingerprintData.hostname,
         p_platform: fingerprintData.platform,
         p_ip_address: fingerprintData.ip_address
       })
-      if (error) {
-        throw new Error(error.message)
-      }
+      // if (error) {
+      //   throw new Error(error.message)
+      // }
       return { success: true, data }
     } catch (error) {
       console.error(`error saving ${error}`)
@@ -209,7 +219,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('start-tiktok-upload', async (event, payload) => {
-    const { folderPath, selectedSession } = payload || {}
+    const { folderPath, selectedSession, userId } = payload || {}
     if (!selectedSession || typeof selectedSession !== 'string') {
       const message = 'Session tidak valid atau kosong.'
       console.error(message)
@@ -232,7 +242,66 @@ app.whenReady().then(() => {
     }
 
     try {
+      const fingerprintData = await getDeviceFingerprint()
+      if (!fingerprintData || !fingerprintData.machine_id) {
+        throw new Error('Failed to retrieve device fingerprint.')
+      }
+
+      // Ambil userId berdasarkan machine_id dari Supabase
+      const { data: userRecord, error: userFetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('machine_id', fingerprintData.machine_id)
+        .single()
+      if (userFetchError) {
+        throw new Error(userFetchError.message || 'Failed to fetch user ID.')
+      }
+
+      const userId = userRecord?.id
+      if (!userId) {
+        throw new Error('User ID tidak ditemukan untuk perangkat ini.')
+      }
+      // Periksa jumlah upload hari ini untuk pengguna ini
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0) // Awal hari
+      const todayEnd = new Date()
+      todayEnd.setHours(23, 59, 59, 999) // Akhir hari
+
+      const { count, error: countError } = await supabase
+        .from('uploads')
+        .select('id', { count: 'exact' })
+        .eq('user_id', userId)
+        .gte('created_at', todayStart.toISOString())
+        .lte('created_at', todayEnd.toISOString())
+
+      if (countError) {
+        throw new Error(countError.message)
+      }
+
+      if (count >= 5) {
+        const message = 'Anda telah mencapai batas upload harian (5x).'
+        console.error(message)
+        event.sender.send('upload-status-update', {
+          popup: false,
+          success: false,
+          message
+        })
+        return { success: false, message }
+      }
+
       const result = await tiktokAutoUpload(folderPath, event.sender, selectedSession)
+
+      const { error: insertError } = await supabase.from('uploads').insert([
+        {
+          user_id: userId,
+          created_at: new Date().toISOString()
+        }
+      ])
+
+      if (insertError) {
+        throw new Error(insertError.message)
+      }
+
       event.sender.send('upload-status-update', {
         popup: true,
         success: true,
@@ -244,8 +313,9 @@ app.whenReady().then(() => {
       event.sender.send('upload-status-update', {
         popup: false,
         success: false,
-        message: `eror upload ${error.message}`
+        message: `Eror upload ${error.message}`
       })
+      return { success: false, message: error.message }
     }
   })
   createWindow()
