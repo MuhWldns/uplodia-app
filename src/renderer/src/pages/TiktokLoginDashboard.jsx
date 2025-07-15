@@ -113,6 +113,7 @@ export default function TiktokLoginDashboard() {
             <p className="text-xs text-gray-500 mt-2">
               Pastikan Anda sudah login untuk melanjutkan.
             </p>
+            <p className="text-xs text-blue-700 mt-2 font-bold">or</p>
             <Link
               to={'/tiktok-uploader'}
               className="text-gray-500 font-extrabold py-4 text-sm inline-block"

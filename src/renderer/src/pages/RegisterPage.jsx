@@ -1,72 +1,72 @@
 import React, { useState } from 'react'
-
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
-
-export default function LoginPageUi() {
+export default function RegisterPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
-  const [messageType, setMessageType] = useState('')
+  const [messageType, setMessageType] = useState('') // 'success', 'error', 'info'
 
   const handleSubmit = async (e) => {
-    e.preventDefault() //
+    e.preventDefault()
 
     if (!email || !password) {
-      setMessage('Email and password cannot be empty.')
+      setMessage('All fields are required.')
       setMessageType('error')
       return
     }
 
-    setMessage('Simulating login attempt...')
+    setMessage('Registering...')
     setMessageType('info')
+
     try {
-      const response = await window.electron.ipcRenderer.invoke('login', { email, password })
-      console.log(response)
+      const response = await window.electron.ipcRenderer.invoke('register', {
+        email,
+        password
+      })
+
       if (response.success) {
-        setMessage('Login Succesfull Redirecting....')
+        setMessage('Registration successful! Redirecting...')
         setMessageType('success')
         setTimeout(() => {
-          navigate('/tiktok-uploader')
+          navigate('/dashboard') // Redirect to login page
         }, 1500)
       } else {
-        console.log('erorr kocak')
-        throw new Error(response.message || 'login faileds')
+        setMessage(response.message || 'Registration failed. Please try again.')
+        setMessageType('error')
       }
     } catch (error) {
-      setMessage('An error occurred during login.')
+      setMessage('An error occurred during registration.')
       setMessageType('error')
-      console.error(error)
+      console.error('Registration error:', error)
     }
-
-    // Ini hanya simulasi. Di aplikasi nyata, Anda akan mengirim ini ke backend Anda.
-    // setTimeout(() => {
-    //   if (email === 'user@example.com' && password === 'password123') {
-    //     setMessage('Login successful! Redirecting...')
-    //     setMessageType('success')
-    //     // Di sini Anda akan mengarahkan user ke dashboard atau halaman lain
-    //     // console.log('Login successful for:', email);
-    //   } else {
-    //     setMessage('Invalid email or password.')
-    //     setMessageType('error')
-    //   }
-    // }, 1500) // Simulasi delay jaringan
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-          Selamat Datang Di Sosmed Automation Tool
-        </h2>
-
-        <h3 className="text-black text-center opacity-70">Silahkan login</h3>
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Create an Account</h2>
 
         <form onSubmit={handleSubmit}>
+          {/* <div className="mb-6">
+            <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              className="shadow-sm appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+              placeholder="Your Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div> */}
+
           <div className="mb-6">
             <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-2">
-              Email address
+              Email Address
             </label>
             <input
               type="email"
@@ -93,11 +93,12 @@ export default function LoginPageUi() {
               required
             />
           </div>
+
           <button
-            onSubmit={handleSubmit}
+            type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out text-center inline-block"
           >
-            Login
+            Register
           </button>
         </form>
 
@@ -116,19 +117,9 @@ export default function LoginPageUi() {
         )}
 
         <div className="mt-6 text-center">
-          <p className="text-blue-600 text-sm">Doesnt have account?</p>
-          <Link
-            className="font-semibold text-blue-600 hover:text-blue-800 text-sm "
-            to={'/register'}
-          >
-            Register
+          <Link to="./" className="text-blue-600 hover:text-blue-800 text-sm">
+            Already have an account? Login
           </Link>
-        </div>
-
-        <div className="mt-6 text-center">
-          <a href="#" className="text-blue-600 hover:text-blue-800 text-sm">
-            Forgot Password?
-          </a>
         </div>
       </div>
     </div>

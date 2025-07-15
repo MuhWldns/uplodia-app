@@ -2,14 +2,22 @@ import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import path from 'path'
 import fs from 'fs'
+
 import { promises as fsPromises } from 'fs'
-
+import { supabase } from '../renderer/src/services/supabase/SupabaseClient.js'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
-
+import { __dirname } from '../renderer/src/utils/esm-path.js'
 import { userAuth } from '../renderer/src/services/tiktok-auth'
 import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload.js'
 import { getActiveSession } from '../renderer/src/services/get-tiktok-session.js'
+
+import {
+  login,
+  register,
+  logout,
+  getCurrentUser
+} from '../renderer/src/services/supabase/authservice.js'
+import { getDeviceFingerprint } from '../renderer/src/services/get-device-fingerprint.js'
 
 let mainWindow
 
@@ -61,6 +69,55 @@ app.whenReady().then(() => {
   })
 
   // IPC test
+  ipcMain.handle('register', async (event, { email, password }) => {
+    try {
+      const { data, error } = await register(email, password)
+      if (error) {
+        throw new Error()
+      }
+
+      return { success: true, user: data }
+    } catch (error) {
+      console.error(error.message)
+    }
+  })
+  ipcMain.handle('save-device-fingerprint', async (event, fingerprint) => {
+    try {
+      const fingerprintData = await getDeviceFingerprint()
+      if (!fingerprintData) {
+        throw new Error('Failed to retrieve device fingerprint.')
+      }
+      const { data, error } = await supabase.rpc('register_user', {
+        p_machine_id: fingerprintData.machine_id,
+        p_hostname: fingerprintData.hostname,
+        p_platform: fingerprintData.platform,
+        p_ip_address: fingerprintData.ip_address
+      })
+      if (error) {
+        throw new Error(error.message)
+      }
+      return { success: true, data }
+    } catch (error) {
+      console.error(`error saving ${error}`)
+      return { success: false, message: error.message }
+    }
+  })
+  ipcMain.handle('login', async (event, { email, password }) => {
+    try {
+      console.log('Received login request:', email, password)
+      const { data, error } = await login(email, password)
+      console.log('Login response:', { data, error })
+
+      if (error) {
+        throw new Error(error.message)
+      }
+      return { success: true, user: data }
+    } catch (error) {
+      s
+      console.error('Login error:', error.message)
+      return { success: false, message: error.message || 'Login failed.' }
+    }
+  })
   ipcMain.handle('check-tiktok-session', async () => {
     try {
       const session = getActiveSession()
