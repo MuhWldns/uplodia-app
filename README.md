@@ -48,7 +48,8 @@ Dengan tool ini, semua proses jadi otomatis dan cepat ✅
 ---
 
 ## 📸 Tampilan Aplikasi
-![UI Screenshot](https://via.placeholder.com/800x400?text=TikTok+Auto+Uploader+UI)
+![UI Screenshot](ui1.png ) (ui2.png)
+
 
 ---
 
