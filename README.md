@@ -1,7 +1,7 @@
-# 🚀 TikTok Auto Uploader
-![Release](https://img.shields.io/github/v/release/USERNAME/REPO?style=flat-square)
-![Downloads](https://img.shields.io/github/downloads/MuhWldns/uplodia-app/total?style=flat-square)
-![Platform](https://img.shields.io/badge/platform-Windows-blue?style=flat-square)
+# 🚀 Uplodia – TikTok Auto Uploader
+![Release](https://img.shields.io/github/v/release/MuhWldns/uplodia-app?style=for-the-badge)
+![Downloads](https://img.shields.io/github/downloads/MuhWldns/uplodia-app/total?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Windows-blue?style=for-the-badge)
 
 📌 **Upload video ke TikTok otomatis langsung dari PC**  
 💡 Hemat waktu, cocok buat content creator & pengelola banyak akun.
@@ -16,7 +16,29 @@
 
 ---
 
-## 🔥 Rencana Fitur Selanjutnya
+## 📥 Download
+👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/latest)**
+
+⚠ **Catatan untuk Windows**:
+- Jika muncul **“Windows protected your PC”**, klik:  
+  **More Info → Run Anyway**  
+  (Ini normal untuk aplikasi baru yang belum terverifikasi)
+
+---
+
+## 🖼 Tampilan Aplikasi
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d7de7548-832c-4fa6-bb93-74ca8e66b72a" width="600" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/4d4a92a1-42e3-4a53-a520-6eaec9cc0df4" width="600" />
+</p>
+
+---
+
+## 🔮 Roadmap Selanjutnya
 - 🔜 Support **Instagram & platform lain**
 - 🔜 Jadwal upload (scheduler)
 - 🔜 Statistik & tracking video
@@ -24,39 +46,10 @@
 
 ---
 
-## 📥 Download Aplikasi
-👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/latest)**
-
-⚠ **Catatan untuk Windows**:
-- Jika muncul **“Windows protected your PC”**, klik:  
-  **More Info → Run Anyway** (normal untuk aplikasi baru)
-
----
-
-## 🛠 Cara Pakai
-1. **Download & install** aplikasi (Windows .exe)
-2. Login akun TikTok (hanya sekali)
-3. Pilih akun tersimpan
-4. Pilih folder video → klik Upload → biarkan app bekerja 🚀
-
----
-
-## 💡 Kenapa Bikin Ini?
-Kalau sering repost konten atau kelola banyak akun, upload manual buang waktu.  
-Dengan tool ini, semua proses jadi otomatis dan cepat ✅
-
----
-
-## 📸 Tampilan Aplikasi
-![UI Screenshot](ui1.png ) (ui2.png)
-
-
----
-
 ## 🤝 Feedback & Saran
 💬 Ada ide fitur baru?  
 - Buka **Issues** di repo ini  
-- 
+
 
 👉 **Follow repo ini** biar gak ketinggalan update!
 
@@ -66,5 +59,3 @@ Dengan tool ini, semua proses jadi otomatis dan cepat ✅
 - Aplikasi ini untuk mempermudah manajemen konten.
 - Gunakan sesuai kebijakan TikTok.
 - Saya tidak bertanggung jawab atas penyalahgunaan.
-
----
