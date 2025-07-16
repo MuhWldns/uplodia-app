@@ -17,7 +17,7 @@
 ---
 
 ## 📥 Download
-👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/latest)**
+👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/download/v1.0.0/uplodia-app.zip)**
 
 ⚠ **Catatan untuk Windows**:
 - Jika muncul **“Windows protected your PC”**, klik:  
