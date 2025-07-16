@@ -1,6 +1,6 @@
 # 🚀 TikTok Auto Uploader
 ![Release](https://img.shields.io/github/v/release/USERNAME/REPO?style=flat-square)
-![Downloads](https://img.shields.io/github/downloads/USERNAME/REPO/total?style=flat-square)
+![Downloads](https://img.shields.io/github/downloads/MuhWldns/uplodia-app/total?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue?style=flat-square)
 
 📌 **Upload video ke TikTok otomatis langsung dari PC**  
@@ -25,7 +25,7 @@
 ---
 
 ## 📥 Download Aplikasi
-👉 **[Klik di sini untuk download versi terbaru](https://github.com/USERNAME/REPO/releases/latest)**
+👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/latest)**
 
 ⚠ **Catatan untuk Windows**:
 - Jika muncul **“Windows protected your PC”**, klik:  
