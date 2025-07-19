@@ -1,7 +1,7 @@
 {
-  "name": "electron-app",
-  "version": "1.0.0",
-  "description": "An Electron application with React",
+  "name": "com.uplodia.app",
+  "version": "1.0.1",
+  "description": "social media automation tools",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",

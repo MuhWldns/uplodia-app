@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import path from 'path'
 import fs from 'fs'
-
+import { autoUpdater } from 'electron-updater'
 import { promises as fsPromises } from 'fs'
 import { supabase } from '../renderer/src/services/supabase/SupabaseClient.js'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -31,7 +31,8 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      devTools: false
     }
   })
 
@@ -53,14 +54,60 @@ function createWindow() {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+function setAutoUpdater() {
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.on('update-available', () => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-available')
+    }
+  })
+  autoUpdater.on('update-not-available', () => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available')
+    }
+  })
+
+  // Event: Proses download pembaruan
+  autoUpdater.on('download-progress', (progress) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('download-progress', progress)
+    }
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    dialog
+      .showMessageBox({
+        type: 'info',
+        title: 'Pembaruan Tersedia',
+        message: 'Pembaruan telah diunduh. Aplikasi akan diperbarui setelah Anda keluar.',
+        buttons: ['Keluar dan Perbarui']
+      })
+      .then((result) => {
+        if (result.response === 0) {
+          autoUpdater.quitAndInstall()
+        }
+      })
+  })
+
+  autoUpdater.on('error', (error) => {
+    console.error('Error saat pembaruan:', error)
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', error.message)
+    }
+  })
+
+  autoUpdater.checkForUpdatesAndNotify()
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
-
+  electronApp.setAppUserModelId('com.uplodia.app')
+  setAutoUpdater()
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils

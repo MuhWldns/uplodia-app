@@ -57,22 +57,27 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
   if (videoFiles.length === 0) {
     throw new Error('Tidak ada video .mp4 ditemukan di folder')
   }
-  console.log('🧪 storageState keys:', Object.keys(storageState))
-  console.log('🧪 storageState type:', typeof storageState)
+  // console.log('🧪 storageState keys:', Object.keys(storageState))
+  // console.log('🧪 storageState type:', typeof storageState)
 
   log('start', 'Membuka browser...')
 
   const browser = await chromium.launch({
     headless: true,
     channel: 'chrome',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled'
+    ],
     viewport: null
   })
-  console.log('typeof browser:', typeof browser)
-  console.log('typeof browser.newContext:', typeof browser?.newContext)
-  console.log('browser keys:', Object.keys(browser))
+  // console.log('typeof browser:', typeof browser)
+  // console.log('typeof browser.newContext:', typeof browser?.newContext)
+  // console.log('browser keys:', Object.keys(browser))
   const context = await browser.newContext({ storageState: profilePath })
-  console.log('typeof context:', typeof context)
-  console.log('context.newPage is function?', typeof context.newPage)
+  // console.log('typeof context:', typeof context)
+  // console.log('context.newPage is function?', typeof context.newPage)
 
   const page = await context.newPage()
   await page.goto('https://www.tiktok.com/upload', {
@@ -96,7 +101,11 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
 
       if (error) {
         if (error.message.includes('Batas upload harian')) {
-          log('error', 'Limit upload harian (5x) tercapai. Proses dihentikan.', sender)
+          log(
+            'error',
+            'Limit upload harian (5x) tercapai. Proses dihentikan. Hubungi Dev untuk unlock ',
+            sender
+          )
           break
         }
         throw new Error(error.message)

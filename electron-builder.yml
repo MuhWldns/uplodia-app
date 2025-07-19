@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: electron-app
+appId: com.uplodia.app
+productName: uplodia-app
 directories:
   buildResources: build
 files:
@@ -10,8 +10,12 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
 asarUnpack:
   - resources/**
+publish:
+  provider: github
+  owner: MuhWlnds
+  repo: uplodia-app
 win:
-  executableName: electron-app
+  executableName: uplodia-app
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

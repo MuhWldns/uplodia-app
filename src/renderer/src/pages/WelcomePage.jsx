@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AutoUpdateNotification } from '../components/UpdateNotifications'
 
 export default function WelcomePage() {
   const navigate = useNavigate()
@@ -14,6 +15,7 @@ export default function WelcomePage() {
 
   return (
     <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-tl from-gray-900 via-blue-800 to-gray-900 text-white">
+      <AutoUpdateNotification />
       <div className="text-center max-w-md">
         <h1 className="text-4xl font-bold mb-4 tracking-wide">
           Welcome to Social Media Automation Tool

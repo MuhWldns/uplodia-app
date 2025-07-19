@@ -17,7 +17,11 @@ export const userAuth = async (accountId) => {
     const browser = await chromium.launch({
       headless: false,
       channel: 'chrome',
-      args: ['--disable-blink-features=AutomationControlled'],
+      args: [
+        '--disable-blink-features=AutomationControlled',
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+      ],
       viewport: null
     })
     const context = await browser.newContext({

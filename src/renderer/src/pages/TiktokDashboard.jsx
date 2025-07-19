@@ -178,9 +178,9 @@ export default function TiktokDashboard() {
             <p className="mt-2 text-xs text-gray-500">Video akan diupload dari: {folderPath}</p>
           )}
         </div>
-        <Link to={'/'} className="text-black text-2xl">
+        {/* <Link to={'/'} className="text-black text-2xl">
           Balik dulu
-        </Link>
+        </Link> */}
 
         {videoFiles.length > 0 && (
           <div className="grid grid-cols-7 gap-6 mb-6">
