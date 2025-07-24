@@ -1,3 +1,11 @@
+> ## 📢 **Pemberitahuan: Proyek Sedang Dalam Maintenance**
+>
+> Saat ini, repository ini sedang dalam proses maintenance dan perbaikan besar. Beberapa fitur mungkin tidak berfungsi dan **semua rilis (releases) telah dihapus sementara**.
+>
+> Kami mohon maaf atas ketidaknyamanannya dan akan memberikan update setelah maintenance selesai. Terima kasih atas pengertian Anda.
+
+
+
 # 🚀 Uplodia – TikTok Auto Uploader
 ![Release](https://img.shields.io/github/v/release/MuhWldns/uplodia-app?style=for-the-badge)
 ![Downloads](https://img.shields.io/github/downloads/MuhWldns/uplodia-app/total?style=for-the-badge)
