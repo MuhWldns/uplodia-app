@@ -2,7 +2,7 @@ import ffmpeg from 'fluent-ffmpeg'
 import path from 'path'
 import fs from 'fs'
 
-export const addWatermark = (inputPath, outputDir, watermarkText = '@mywatermark') => {
+export const addWatermark = (inputPath, outputDir, watermarkText = '') => {
   return new Promise((resolve, reject) => {
     const filename = path.basename(inputPath)
     const outputPath = path.join(outputDir, filename)
@@ -19,7 +19,7 @@ export const addWatermark = (inputPath, outputDir, watermarkText = '@mywatermark
           text: watermarkText,
           fontsize: 24,
           fontcolor: 'white',
-          x: 10,
+          x: '(w-text_w)-10',
           y: '(h-text_h)-10',
           box: 1,
           boxcolor: 'black@0.5',

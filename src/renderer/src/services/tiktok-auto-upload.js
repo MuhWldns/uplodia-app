@@ -1,12 +1,16 @@
 import { chromium } from 'playwright'
 import { app } from 'electron'
-import path from 'path'
+import path, { resolve } from 'path'
 import fs from 'fs'
 import chalk from 'chalk'
 import { __dirname } from '../utils/esm-path'
 import { error } from 'console'
 import { supabase } from './supabase/SupabaseClient'
 import { getDeviceFingerprint } from './get-device-fingerprint'
+import { Worker } from 'worker_threads'
+import axios from 'axios'
+import api from '../utils/api'
+import { machine } from 'os'
 
 function delay(min, max) {
   return Math.floor(Math.random() * (max - min) + 1 + min)
@@ -35,10 +39,40 @@ const log = (level, message, sender = null) => {
     })
   }
 }
+const processWatermark = async (inputPath, outputDir, watermarkText, sender) => {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(path.join(__dirname, 'worker', 'watermark.worker.js'), {
+      workerData: { inputPath, outputDir, watermarkText }
+    })
+    log('start', `menambahkan watermark ke ${path.basename(inputPath)}`, sender)
+    worker.on('message', (msg) => {
+      if (msg.succes) {
+        log('success', `watermark selesai untuk ${path.basename(inputPath)}`, sender)
+        resolve(message.outputPath)
+      } else {
+        log(
+          'error',
+          `Gagal menambahkan watermark ke ${path.basename(inputPath)}: ${msg.error}`,
+          sender
+        )
+        reject(new Error(msg.error))
+      }
+    })
+    worker.on('error', (err) => {
+      log('error', `Error pada worker: ${error.message}`, sender)
+      reject(err)
+    })
+    worker.on('exit', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Worker stop with exit code ${code}`))
+      }
+    })
+  })
+}
 
-export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
+export const tiktokAutoUpload = async (folderPath, sender, selectedSession, apiKey) => {
   if (!selectedSession) {
-    throw new error('Session tidak dipilih')
+    throw new Error('Session tidak dipilih')
   }
   const profilePath = path.join(
     app.getPath('userData'),
@@ -86,6 +120,11 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
   })
   log('success', 'Upload page loaded.', sender)
 
+  // const watermarkPromises = videoFiles.map((video) => {
+  //   const inputPath = path.join(folderPath, video)
+  //   return processWatermark(inputPath, outputDir, watermarkText, sender)
+  // })
+
   let uploaded = 0
 
   for (let i = 0; i < videoFiles.length; i++) {
@@ -95,22 +134,38 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession) => {
 
     try {
       const fingerprintData = await getDeviceFingerprint()
-      const { data, error } = await supabase.rpc('increment_upload_count', {
-        p_machine_id: fingerprintData.machine_id
+      // const { data, error } = await supabase.rpc('increment_upload_count', {
+      //   p_machine_id: fingerprintData.machine_id
+      // })
+
+      // if (error) {
+      //   if (error.message.includes('Batas upload harian')) {
+      //     log(
+      //       'error',
+      //       'Limit upload harian (5x) tercapai. Proses dihentikan. Hubungi Dev untuk unlock ',
+      //       sender
+      //     )
+      //     break
+      //   }
+      //   throw new Error(error.message)
+      // }
+      const response = await api.post('/verify-upload', {
+        machine_id: fingerprintData.machine_id,
+        api_key: apiKey
       })
 
-      if (error) {
-        if (error.message.includes('Batas upload harian')) {
+      if (response.data.status === 'error') {
+        log('error', response.data.message, sender)
+        if (response.data.message.includes('Batas Harian')) {
           log(
             'error',
-            'Limit upload harian (5x) tercapai. Proses dihentikan. Hubungi Dev untuk unlock ',
+            'Limit upload harian tercapai. Proses dihentikan. Hubungi Developer untuk unlock limit',
             sender
           )
           break
         }
-        throw new Error(error.message)
+        throw new Error(response.data.message)
       }
-
       await page.click('[data-e2e="select_video_button"]')
       await page.waitForTimeout(delay(1000, 7000))
       await page.setInputFiles('input[type="file"]', fullPath)

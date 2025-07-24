@@ -1,3 +1,4 @@
+// @ts-ignore
 import React, { useState } from 'react'
 
 import { Link } from 'react-router-dom'
@@ -24,6 +25,7 @@ export default function LoginPageUi() {
     try {
       const response = await window.electron.ipcRenderer.invoke('login', { email, password })
       console.log(response)
+      // @ts-ignore
       if (response.success) {
         setMessage('Login Succesfull Redirecting....')
         setMessageType('success')
@@ -32,6 +34,7 @@ export default function LoginPageUi() {
         }, 1500)
       } else {
         console.log('erorr kocak')
+        // @ts-ignore
         throw new Error(response.message || 'login faileds')
       }
     } catch (error) {

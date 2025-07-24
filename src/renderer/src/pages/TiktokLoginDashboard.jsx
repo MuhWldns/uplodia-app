@@ -28,7 +28,9 @@ export default function TiktokLoginDashboard() {
       )
 
       return () => {
+        // @ts-ignore
         if (unsubscribe) {
+          // @ts-ignore
           unsubscribe()
         }
       }
@@ -53,8 +55,10 @@ export default function TiktokLoginDashboard() {
         .invoke('start-log', { alias: inputAlias }) // Kirim alias ke proses utama
         .then((res) => {
           console.log('LOG E: Invoke start-log selesai, hasil:', res)
+          // @ts-ignore
           setLoginStatusMessage(res.message)
           setShowNotification(true)
+          // @ts-ignore
           if (res.success) {
             setTimeout(() => {
               navigate('/tiktok-uploader')

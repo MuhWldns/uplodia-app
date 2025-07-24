@@ -8,6 +8,7 @@ export default function SessionSelector({ onSessionSelected, refreshed }) {
     const fetchSessions = async () => {
       if (window.electron && window.electron.ipcRenderer) {
         const activeSessions = await window.electron.ipcRenderer.invoke('check-tiktok-session')
+
         setSessions(activeSessions)
       }
     }

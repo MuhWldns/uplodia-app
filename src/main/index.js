@@ -10,7 +10,7 @@ import { __dirname } from '../renderer/src/utils/esm-path.js'
 import { userAuth } from '../renderer/src/services/tiktok-auth'
 import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload.js'
 import { getActiveSession } from '../renderer/src/services/get-tiktok-session.js'
-
+import api from '../renderer/src/utils/api.js'
 import {
   login,
   register,
@@ -134,26 +134,21 @@ app.whenReady().then(() => {
       if (!fingerprintData) {
         throw new Error('Failed to retrieve device fingerprint.')
       }
-      const { data: existingDevice, error: fetchError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('machine_id', fingerprintData.machine_id)
-        .single()
 
-      // if (fetchError && fetchError.code !== 'PGRST116') {
-      // //   throw new Error(fetchError.message)
-      // // }
-
-      const { data, error } = await supabase.rpc('register_user', {
-        p_machine_id: fingerprintData.machine_id,
-        p_hostname: fingerprintData.hostname,
-        p_platform: fingerprintData.platform,
-        p_ip_address: fingerprintData.ip_address
+      const response = await api.post(`/register`, {
+        machine_id: fingerprintData.machine_id,
+        hostname: fingerprintData.hostname,
+        ip_address: fingerprintData.ip_address,
+        platform: fingerprintData.platform
       })
+
+      return {
+        success: true,
+        message: 'device registered'
+      }
       // if (error) {
       //   throw new Error(error.message)
       // }
-      return { success: true, data }
     } catch (error) {
       console.error(`error saving ${error}`)
       return { success: false, message: error.message }
@@ -170,7 +165,6 @@ app.whenReady().then(() => {
       }
       return { success: true, user: data }
     } catch (error) {
-      s
       console.error('Login error:', error.message)
       return { success: false, message: error.message || 'Login failed.' }
     }
@@ -290,7 +284,7 @@ app.whenReady().then(() => {
 
     try {
       // Lakukan upload
-      const result = await tiktokAutoUpload(folderPath, event.sender, selectedSession)
+      const result = await tiktokAutoUpload(folderPath, event.sender, selectedSession, apiKey)
 
       event.sender.send('upload-status-update', {
         popup: true,

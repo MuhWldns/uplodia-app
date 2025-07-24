@@ -1,11 +1,14 @@
+// @ts-ignore
 import React, { useState, useEffect, useRef } from 'react'
 import { FaTiktok, FaFolderOpen, FaCloudUploadAlt } from 'react-icons/fa'
 import SuccessNotification from '../components/succesNotifications'
+// @ts-ignore
 import { Link } from 'react-router-dom'
 import AddAccount from '../components/addAccount'
 import SessionSelector from '../components/SessionSelector'
 
 export default function TiktokDashboard() {
+  const [premiumKey, setPremiumKey] = useState('')
   const [refreshSession, setRefreshSession] = useState(false)
   const [folderPath, setFolderPath] = useState('')
   const [videoFiles, setVideoFiles] = useState([])
@@ -15,12 +18,14 @@ export default function TiktokDashboard() {
   const [uploadStatusType, setUploadStatusType] = useState('info')
   const [showPopupNotification, setShowPopupNotification] = useState(false)
   const [showAddAccountModal, setShowAddAccountModal] = useState(false)
+  // @ts-ignore
   const [account, setAccounts] = useState('')
   const [selectedSession, setSelectedSession] = useState('')
   const [logs, setLogs] = useState([])
   const logContainerRef = useRef(null)
 
   const handleAddAccount = (alias) => {
+    // @ts-ignore
     setAccounts((prevAccounts) => [...prevAccounts, alias])
     setRefreshSession((prev) => !prev)
     setShowAddAccountModal(false)
@@ -50,8 +55,16 @@ export default function TiktokDashboard() {
 
       // Cleanup kedua listener saat komponen di-unmount
       return () => {
-        if (unsubscribeStatus) unsubscribeStatus()
-        if (unsubscribeLog) unsubscribeLog()
+        if (unsubscribeStatus) {
+          window.electron.ipcRenderer.removeListener(
+            'upload-status-update',
+            handleUploadStatusUpdate
+          )
+        }
+
+        if (unsubscribeLog) {
+          window.electron.ipcRenderer.removeListener('tiktok-upload-log', handleUploadLog)
+        }
       }
     }
   }, [])
@@ -69,9 +82,12 @@ export default function TiktokDashboard() {
 
     try {
       const result = await window.electron.ipcRenderer.invoke('select-video-folder')
+
       if (result?.folderPath && result?.files) {
         setFolderPath(result.folderPath)
+
         setVideoFiles(result.files)
+
         setUploadStatusMessage(`Folder terpilih: ${result.folderPath}`)
         setUploadStatusType('success')
       } else {
@@ -91,6 +107,11 @@ export default function TiktokDashboard() {
   }
 
   const handleStartUpload = async () => {
+    if (addWatermark && !watermarkText.trim()) {
+      setUploadStatusMessage('Mohon isi teks watermark terlebih dahulu')
+      setUploadStatusType('error')
+      return
+    }
     if (!selectedSession) {
       setUploadStatusMessage('Mohon pilih session terlebih dahulu.')
       setUploadStatusType('error')
@@ -109,7 +130,8 @@ export default function TiktokDashboard() {
     const uploadData = {
       folderPath,
       watermarkText: addWatermark ? watermarkText : '',
-      selectedSession
+      selectedSession,
+      apiKey: premiumKey
     }
 
     try {
@@ -156,6 +178,26 @@ export default function TiktokDashboard() {
         <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">
           Mulai Upload Video TikTok
         </h2>
+        <div className="mb-4">
+          <div className="flex items-center space-x-3">
+            <input
+              type="text"
+              value={premiumKey}
+              onChange={(e) => setPremiumKey(e.target.value)}
+              placeholder="Masukan Key Untuk Menghapus Limit Harian"
+              className="flex-grow shadow-sm border rounded py-2 px-3 text-gray-600 text-sm bg-gray-50"
+            />
+            <button
+              onClick={() => {
+                // Logic nanti
+                console.log('Premium key:', premiumKey)
+              }}
+              className="bg-gray-400 hover:bg-gray-500 text-white text-sm px-3 py-2 rounded"
+            >
+              Aktifkan
+            </button>
+          </div>
+        </div>
 
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-medium mb-2">Folder Video:</label>

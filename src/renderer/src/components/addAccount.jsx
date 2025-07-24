@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react'
 
 export default function AddAccount({ onAccountAdded, onClose }) {
@@ -20,6 +21,7 @@ export default function AddAccount({ onAccountAdded, onClose }) {
         .invoke('start-log', { alias: inputAlias }) // Kirim alias ke proses utama
         .then((res) => {
           setStatusMessage(res.message)
+
           setStatusType(res.success ? 'success' : 'error')
           if (res.success && onAccountAdded) {
             onAccountAdded(inputAlias) // Callback untuk menambahkan akun ke daftar

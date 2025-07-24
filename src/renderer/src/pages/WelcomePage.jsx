@@ -1,12 +1,14 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AutoUpdateNotification } from '../components/UpdateNotifications'
+import { AutoUpdateNotification } from '../components/UpdateNotifications.jsx'
+import axios from 'axios'
 
 export default function WelcomePage() {
   const navigate = useNavigate()
 
   const handleStart = async () => {
     const response = await window.electron.ipcRenderer.invoke('save-device-fingerprint')
+    // @ts-ignore
     if (response.success) {
       console.log('fingerprint saved')
       navigate('/dashboard')

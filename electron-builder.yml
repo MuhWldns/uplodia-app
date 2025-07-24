@@ -10,10 +10,7 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
 asarUnpack:
   - resources/**
-publish:
-  provider: github
-  owner: MuhWlnds
-  repo: uplodia-app
+
 win:
   executableName: uplodia-app
 nsis:
@@ -42,7 +39,8 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: MuhWldns
+  repo: uplodia-app
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
