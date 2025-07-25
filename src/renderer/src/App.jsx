@@ -4,6 +4,7 @@ import LoginPageUi from './pages/loginPage'
 import WelcomePage from './pages/WelcomePage'
 import RegisterPages from './pages/RegisterPage'
 import { Route, Routes, HashRouter, Link } from 'react-router-dom'
+import AddWatermarkPage from './pages/AddWatermarkPage'
 export default function HomePage() {
   return (
     <>
@@ -13,6 +14,7 @@ export default function HomePage() {
           <Route path="/" element={<WelcomePage />}></Route>
           <Route path="/dashboard" element={<TiktokLoginDashboard />}></Route>
           <Route path="/tiktok-uploader" element={<TiktokDashboard />}></Route>
+          <Route path="/add-watermark" element={<AddWatermarkPage />}></Route>
         </Routes>
       </HashRouter>
     </>

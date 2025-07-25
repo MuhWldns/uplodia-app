@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import pkg from 'electron-store'
 import { join } from 'path'
 import path from 'path'
 import fs from 'fs'
@@ -18,8 +19,16 @@ import {
   getCurrentUser
 } from '../renderer/src/services/supabase/authservice.js'
 import { getDeviceFingerprint } from '../renderer/src/services/get-device-fingerprint.js'
+import {
+  savePremiumToStorage,
+  validatePremiumKey,
+  getPremiumFromStorage
+} from '../renderer/src/services/premium-services.js'
+import { IoReturnUpBack } from 'react-icons/io5'
 
 let mainWindow
+const Store = pkg.default || pkg
+const store = new Store()
 
 function createWindow() {
   // Create the browser window.
@@ -209,6 +218,78 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('register-premium-key', async (event, { api_key }) => {
+    try {
+      if (!api_key || !api_key.trim()) {
+        return {
+          success: false,
+          message: 'API key tidak boleh kosong'
+        }
+      }
+      const validationResult = await validatePremiumKey(api_key.trim())
+
+      if (!validationResult.success) {
+        return {
+          success: false,
+          message: validationResult.message
+        }
+      }
+
+      if (validationResult.valid) {
+        const { machine_id } = await getDeviceFingerprint()
+        const premiumData = {
+          apiKey: api_key.trim(),
+          isPremium: true,
+          activatedAt: new Date().toISOString(),
+          machineId: machine_id
+        }
+
+        const saveResult = savePremiumToStorage(store, premiumData)
+        if (saveResult.success) {
+          return {
+            success: true,
+            message: validationResult.message
+          }
+        } else {
+          return {
+            success: false,
+            message: 'Validasi berhasil dilakukan tetapi gagal di simpan'
+          }
+        }
+      } else {
+        return {
+          success: false,
+          message: validationResult.message,
+          isPremium: false
+        }
+      }
+    } catch (error) {
+      console.error('Error in register-premium-key:', error)
+      return {
+        success: false,
+        message: 'Terjadi kesalahan saat aktivasi premium'
+      }
+    }
+  })
+  ipcMain.handle('get-premium-status', async (event) => {
+    try {
+      const result = getPremiumFromStorage(store)
+      return result.data
+    } catch (error) {
+      console.error('Error getting premium status:', error)
+      return { isPremium: false }
+    }
+  })
+
+  ipcMain.handle('clear-premium-data', async (event) => {
+    try {
+      store.delete('premium')
+      return { success: true, message: 'Premium data berhasil dihapus' }
+    } catch (error) {
+      console.error('Error clearing premium data:', error)
+      return { success: false, message: 'Gagal menghapus data premium' }
+    }
+  })
   ipcMain.handle('select-video-folder', async (event) => {
     let selectedPath = null
     let videoFiles = []
@@ -283,7 +364,8 @@ app.whenReady().then(() => {
     }
 
     try {
-      // Lakukan upload
+      const premiumStatus = getPremiumFromStorage(store)
+      const apiKey = premiumStatus.data?.isPremium ? premiumStatus.data.apiKey : null
       const result = await tiktokAutoUpload(folderPath, event.sender, selectedSession, apiKey)
 
       event.sender.send('upload-status-update', {

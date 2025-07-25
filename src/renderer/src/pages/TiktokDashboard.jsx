@@ -1,13 +1,22 @@
 // @ts-ignore
 import React, { useState, useEffect, useRef } from 'react'
-import { FaTiktok, FaFolderOpen, FaCloudUploadAlt } from 'react-icons/fa'
+import {
+  FaTiktok,
+  FaFolderOpen,
+  FaCloudUploadAlt,
+  FaPlus,
+  FaExclamationTriangle
+} from 'react-icons/fa'
 import SuccessNotification from '../components/succesNotifications'
+import Navbar from '../components/Navbar'
 // @ts-ignore
 import { Link } from 'react-router-dom'
 import AddAccount from '../components/addAccount'
 import SessionSelector from '../components/SessionSelector'
 
 export default function TiktokDashboard() {
+  const [showActivationModal, setShowActivationModal] = useState(false)
+  const [activationMessage, setActivationMessage] = useState('')
   const [premiumKey, setPremiumKey] = useState('')
   const [refreshSession, setRefreshSession] = useState(false)
   const [folderPath, setFolderPath] = useState('')
@@ -23,6 +32,59 @@ export default function TiktokDashboard() {
   const [selectedSession, setSelectedSession] = useState('')
   const [logs, setLogs] = useState([])
   const logContainerRef = useRef(null)
+
+  const handlePremiumKey = async () => {
+    if (!premiumKey.trim()) {
+      setShowActivationModal(true)
+      setActivationMessage('Key Premium Tidak Boleh Kosong')
+      setTimeout(() => {
+        setShowActivationModal(false)
+      }, 1000)
+
+      return
+    }
+    try {
+      setUploadStatusMessage('Memvalidasi premium key...')
+      setUploadStatusType('info')
+      const result = await window.electron.ipcRenderer.invoke('register-premium-key', {
+        api_key: premiumKey.trim()
+      })
+
+      if (result.success) {
+        setUploadStatusMessage(`✅ ${result.message}`)
+        setUploadStatusType('success')
+
+        // Optional: Show success modal
+        setActivationMessage(result.message)
+        setShowActivationModal(true)
+
+        setTimeout(() => {
+          setShowActivationModal(false)
+        }, 3000)
+      } else {
+        setUploadStatusMessage(`Premium Keys Tidak Valid`)
+        setUploadStatusType('error')
+
+        setActivationMessage('Keys Tidak Valid Silahkan Hubungi Developer\n wa.me/089662443648')
+        setShowActivationModal(true)
+
+        setTimeout(() => {
+          setShowActivationModal(false)
+        }, 3000)
+      }
+    } catch (error) {
+      console.error('Error activating premium:', error)
+      setUploadStatusMessage(`Gagal aktivasi premium: ${error.message}`)
+      setUploadStatusType('error')
+
+      setActivationMessage('Terjadi kesalahan saat aktivasi premium')
+      setShowActivationModal(true)
+
+      setTimeout(() => {
+        setShowActivationModal(false)
+      }, 2000)
+    }
+  }
 
   const handleAddAccount = (alias) => {
     // @ts-ignore
@@ -126,12 +188,12 @@ export default function TiktokDashboard() {
     setUploadStatusMessage('Memulai proses upload otomatis...')
     setUploadStatusType('info')
     setShowPopupNotification(false)
-
+    const premiumStatus = await window.electron.ipcRenderer.invoke('get-premium-status')
     const uploadData = {
       folderPath,
       watermarkText: addWatermark ? watermarkText : '',
       selectedSession,
-      apiKey: premiumKey
+      apiKey: premiumStatus?.isPremium ? premiumStatus.apiKey : null
     }
 
     try {
@@ -145,6 +207,7 @@ export default function TiktokDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-start p-12">
+      <Navbar className="flex justify-" />
       <nav className="bg-white shadow-md w-full max-w-10xl p-4 mb-8 rounded-lg">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
@@ -188,17 +251,25 @@ export default function TiktokDashboard() {
               className="flex-grow shadow-sm border rounded py-2 px-3 text-gray-600 text-sm bg-gray-50"
             />
             <button
-              onClick={() => {
-                // Logic nanti
-                console.log('Premium key:', premiumKey)
-              }}
+              onClick={handlePremiumKey}
               className="bg-gray-400 hover:bg-gray-500 text-white text-sm px-3 py-2 rounded"
             >
               Aktifkan
             </button>
           </div>
         </div>
-
+        {showActivationModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 text-center">
+              <div className="mb-4">
+                <div className="bg-red-100 rounded-full p-3 inline-block">
+                  <FaExclamationTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <p className="text-gray-800 font-medium">{activationMessage}</p>
+            </div>
+          </div>
+        )}
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-medium mb-2">Folder Video:</label>
           <div className="flex items-center space-x-3">
@@ -216,6 +287,7 @@ export default function TiktokDashboard() {
               <FaFolderOpen className="inline mr-2" /> Pilih Folder
             </button>
           </div>
+
           {folderPath && (
             <p className="mt-2 text-xs text-gray-500">Video akan diupload dari: {folderPath}</p>
           )}
@@ -235,46 +307,68 @@ export default function TiktokDashboard() {
                 />
                 <p className="text-xs text-gray-600 p-2 truncate">{file}</p>
 
-                <button
+                {/* <button
                   className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
                   onClick={handleRemoveFile}
                 >
                   hapus
-                </button>
+                </button> */}
               </div>
             ))}
           </div>
         )}
 
-        <div className="mb-6 border p-4 rounded-md bg-gray-50">
-          <div className="flex items-center mb-2">
+        <div className="mb-6">
+          <div className="flex items-center mb-4">
             <input
               type="checkbox"
               id="addWatermark"
               checked={addWatermark}
               onChange={(e) => setAddWatermark(e.target.checked)}
-              className="mr-2 form-checkbox h-5 w-5 text-blue-600"
+              className="mr-3 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
             />
             <label htmlFor="addWatermark" className="text-gray-700 font-medium">
               Tambahkan Watermark Teks
             </label>
           </div>
+
           {addWatermark && (
-            <div>
-              <label
-                htmlFor="watermarkText"
-                className="block text-gray-600 text-xs font-medium mb-1 ml-7"
-              >
-                Teks Watermark:
-              </label>
-              <input
-                type="text"
-                id="watermarkText"
-                value={watermarkText}
-                onChange={(e) => setWatermarkText(e.target.value)}
-                placeholder="Misal: @NamaAkunAnda"
-                className="ml-7 shadow-sm border rounded w-full py-2 px-3 text-gray-700"
-              />
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="watermarkText"
+                  className="block text-gray-700 text-sm font-medium mb-2"
+                >
+                  Teks Watermark:
+                </label>
+                <input
+                  type="text"
+                  id="watermarkText"
+                  value={watermarkText}
+                  onChange={(e) => setWatermarkText(e.target.value)}
+                  placeholder="Misal: @NamaAkunAnda"
+                  className="w-full shadow-sm border rounded py-3 px-4 text-gray-700 bg-gray-50"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    // Logic untuk add watermark standalone
+                    console.log('Processing watermark...')
+                  }}
+                  className="bg-blue-500 hover:bg-blue-800 text-white font-semibold py-2 px-2 rounded flex items-center space-x-2 text-sm"
+                >
+                  <FaPlus className="text-sm" />
+                  <span>Tambah Watermark</span>
+                </button>
+              </div>
+
+              {folderPath && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Video akan diproses dari: {folderPath} → hasil disimpan ke folder "output"
+                </p>
+              )}
             </div>
           )}
         </div>
