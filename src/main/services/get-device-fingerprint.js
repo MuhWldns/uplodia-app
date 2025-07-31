@@ -1,9 +1,12 @@
-import { machineIdSync } from 'node-machine-id'
+import machineIdModule from 'node-machine-id'
+const { machineIdSync } = machineIdModule
 import os from 'os'
-import axios from 'axios'
+
 export const getDeviceFingerprint = async () => {
   try {
+    console.log('tes')
     const machineId = machineIdSync(true) // Gunakan ID yang stabil
+    console.log('getting machine id')
 
     const hostname = os.hostname()
 

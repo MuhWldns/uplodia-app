@@ -1,34 +1,44 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { utilityProcess, MessageChannelMain } from 'electron'
 import pkg from 'electron-store'
-import { join } from 'path'
-import path from 'path'
+import path, { join, resolve } from 'path'
+import forkPath from '../main/services/child/addwatermark.child.js?modulePath'
 import fs from 'fs'
-import { autoUpdater } from 'electron-updater'
+import { fork } from 'child_process'
+import updaterModule from 'electron-updater'
+const updater = updaterModule.autoUpdater
+
 import { promises as fsPromises } from 'fs'
-import { supabase } from '../renderer/src/services/supabase/SupabaseClient.js'
+import { supabase } from './services/supabase/SupabaseClient.js'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { __dirname } from '../renderer/src/utils/esm-path.js'
-import { userAuth } from '../renderer/src/services/tiktok-auth'
-import { tiktokAutoUpload } from '../renderer/src/services/tiktok-auto-upload.js'
-import { getActiveSession } from '../renderer/src/services/get-tiktok-session.js'
-import api from '../renderer/src/utils/api.js'
-import {
-  login,
-  register,
-  logout,
-  getCurrentUser
-} from '../renderer/src/services/supabase/authservice.js'
-import { getDeviceFingerprint } from '../renderer/src/services/get-device-fingerprint.js'
+import pLimit from 'p-limit'
+import { userAuth } from './services/tiktok-auth.js'
+import { tiktokAutoUpload } from './services/tiktok-auto-upload.js'
+import { getActiveSession } from './services/get-tiktok-session.js'
+import api from './utils/api.js'
+import { login, register, logout, getCurrentUser } from './services/supabase/authservice.js'
+import { getDeviceFingerprint } from './services/get-device-fingerprint.js'
 import {
   savePremiumToStorage,
   validatePremiumKey,
   getPremiumFromStorage
-} from '../renderer/src/services/premium-services.js'
-import { IoReturnUpBack } from 'react-icons/io5'
+} from './services/premium-services.js'
+import { fileURLToPath } from 'url'
 
+// import { calledWorker } from './services/watermark.js'
+import os from 'os'
+import Ffmpeg from 'fluent-ffmpeg'
+
+import { rejects } from 'assert'
+// const __filename = fileURLToPath(import.meta.url)
+// const __dirname = path.dirname(__filename)
 let mainWindow
 const Store = pkg.default || pkg
 const store = new Store()
+const ffmpegPath =
+  process.env.NODE_ENV === 'development'
+    ? path.resolve('./resources/ffmpeg.exe')
+    : path.join(process.resourcesPath, 'ffmpeg.exe')
 
 function createWindow() {
   // Create the browser window.
@@ -39,9 +49,9 @@ function createWindow() {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: fileURLToPath(new URL('../preload/index.mjs', import.meta.url)),
       sandbox: false,
-      devTools: false
+      devTools: true
     }
   })
 
@@ -64,28 +74,28 @@ function createWindow() {
   }
 }
 function setAutoUpdater() {
-  autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true
+  updater.auto = true
+  updater.autoInstallOnAppQuit = true
 
-  autoUpdater.on('update-available', () => {
+  updater.on('update-available', () => {
     if (mainWindow) {
       mainWindow.webContents.send('update-available')
     }
   })
-  autoUpdater.on('update-not-available', () => {
+  updater.on('update-not-available', () => {
     if (mainWindow) {
       mainWindow.webContents.send('update-not-available')
     }
   })
 
   // Event: Proses download pembaruan
-  autoUpdater.on('download-progress', (progress) => {
+  updater.on('download-progress', (progress) => {
     if (mainWindow) {
       mainWindow.webContents.send('download-progress', progress)
     }
   })
 
-  autoUpdater.on('update-downloaded', () => {
+  updater.on('update-downloaded', () => {
     dialog
       .showMessageBox({
         type: 'info',
@@ -95,19 +105,19 @@ function setAutoUpdater() {
       })
       .then((result) => {
         if (result.response === 0) {
-          autoUpdater.quitAndInstall()
+          updater.quitAndInstall()
         }
       })
   })
 
-  autoUpdater.on('error', (error) => {
+  updater.on('error', (error) => {
     console.error('Error saat pembaruan:', error)
     if (mainWindow) {
       mainWindow.webContents.send('update-error', error.message)
     }
   })
 
-  autoUpdater.checkForUpdatesAndNotify()
+  updater.checkForUpdatesAndNotify()
 }
 
 // This method will be called when Electron has finished
@@ -137,6 +147,174 @@ app.whenReady().then(() => {
       console.error(error.message)
     }
   })
+
+  // ipcMain.handle('test-worker', async () => {
+  //   try {
+  //     console.log('🔧 Starting worker test...')
+  //     const result = await calledWorker()
+  //     console.log('🔧 Worker test result:', result)
+  //     return result // ✅ Return result to renderer
+  //   } catch (error) {
+  //     console.error('🔧 Worker test error:', error)
+  //     return {
+  //       success: false,
+  //       error: error.message
+  //     }
+  //   }
+  // })
+
+  // src/main/index.js - Replace your entire handler
+
+  // index.js
+  // index.js (Handler tes sementara)
+
+  // index.js (Gunakan kode final ini)
+
+  // index.js
+
+  // index.js (Versi Final Sesuai Dokumentasi)
+
+  // index.js
+
+  ipcMain.handle(
+    'process-watermark-batch',
+    async (event, { inputFolder, outputFolder, watermarkText, videoFiles }) => {
+      const maxConcurrent = Math.max(2, os.cpus().length - 1)
+      const limitCount = Math.min(videoFiles.length, maxConcurrent)
+      const limit = pLimit(limitCount)
+
+      try {
+        const results = await Promise.allSettled(
+          videoFiles.map((filename, idx) =>
+            limit(
+              () =>
+                new Promise((resolve, reject) => {
+                  const { port1, port2 } = new MessageChannelMain()
+                  const child = utilityProcess.fork(forkPath)
+                  port2.start()
+
+                  // Kirim port ke child
+                  child.postMessage({}, [port1])
+                  const finalOutputDir = path.join(inputFolder, 'output')
+                  // Kirim data watermark ke child lewat port2
+
+                  if (!fs.existsSync(ffmpegPath)) {
+                    console.error('FFMPEG binary tidak ditemukan:', ffmpegPath)
+                  }
+                  port2.postMessage({
+                    inputPath: path.join(inputFolder, filename),
+                    outputDir: finalOutputDir,
+                    watermarkText,
+                    ffmpegPath
+                  })
+
+                  // Handle pesan dari child
+                  port2.on('message', (e) => {
+                    const data = e.data
+                    // Kirim log ke renderer
+                    event.sender.send('watermark-log', {
+                      fileName: filename,
+                      index: idx + 1,
+                      total: videoFiles.length,
+                      level: data.level || data.status || 'info',
+                      message: data.message
+                    })
+                    // Sukses/gagal
+                    if (data.status === 'success') {
+                      resolve({ fileName: filename, ...data })
+                      child.kill()
+                    }
+                    if (data.status === 'error') {
+                      reject(new Error(`[${filename}] ${data.message}`))
+                      child.kill()
+                    }
+                  })
+
+                  // Handle child exit error
+                  child.on('exit', (code) => {
+                    if (code !== 0) {
+                      reject(new Error(`Child process keluar tak terduga dengan kode ${code}`))
+                    }
+                  })
+                })
+            )
+          )
+        )
+        return { success: true, results }
+      } catch (error) {
+        return { success: false, message: error.message }
+      }
+    }
+  )
+  // ipcMain.handle(
+  //   'process-watermark-batch',
+  //   async (event, { inputFolder, outputFolder, watermarkText, videoFiles }) => {
+  //     const maxConcurrent = Math.max(2, os.cpus().length - 1)
+  //     const limitCount = Math.min(videoFiles.length, maxConcurrent)
+  //     const limit = pLimit(limitCount)
+
+  //     try {
+  //       const results = await Promise.allSettled(
+  //         videoFiles.map((filename) =>
+  //           limit(
+  //             () =>
+  //               new Promise((resolve, reject) => {
+  //                 const { port1, port2 } = new MessageChannelMain()
+  //                 const child = utilityProcess.fork(forkPath)
+
+  //                 child.on('exit', (code) => {
+  //                   // Jika child mati sebelum promise selesai, reject promise
+  //                   if (code !== 0) {
+  //                     reject(
+  //                       new Error(`Child process keluar secara tak terduga dengan kode ${code}`)
+  //                     )
+  //                   }
+  //                 })
+
+  //                 port2.on('message', (e) => {
+  //                   const data = e.data
+
+  //                   // ✅ TANGANI SINYAL READY DARI CHILD
+  //                   if (data.type === 'ready') {
+  //                     // Setelah child siap, baru kirim data tugasnya
+  //                     port2.postMessage({
+  //                       data: {
+  //                         inputPath: path.join(inputFolder, filename),
+  //                         outputDir: outputFolder,
+  //                         watermarkText,
+  //                         ffmpegPath
+  //                       }
+  //                     })
+  //                   } else if (data.type === 'done') {
+  //                     // Tangani pesan selesai
+  //                     if (data.status === 'success') {
+  //                       resolve({ status: 'fulfilled', value: { filename, ...data } })
+  //                     } else {
+  //                       reject(new Error(`[${filename}] ${data.message}`))
+  //                     }
+  //                     child.kill()
+  //                   } else if (data.type === 'progress') {
+  //                     // Tangani pesan progres
+  //                     event.sender.send('watermark-log', {
+  //                       level: data.level || 'info',
+  //                       message: `[${filename}] ${data.message}`
+  //                     })
+  //                   }
+  //                 })
+
+  //                 port2.start()
+  //                 // Hanya kirim port-nya saja terlebih dahulu
+  //                 child.postMessage({}, [port1])
+  //               })
+  //           )
+  //         )
+  //       )
+  //       return { success: true, results }
+  //     } catch (error) {
+  //       return { success: false, message: error.message }
+  //     }
+  //   }
+  // )
   ipcMain.handle('save-device-fingerprint', async (event, fingerprint) => {
     try {
       const fingerprintData = await getDeviceFingerprint()

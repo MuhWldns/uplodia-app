@@ -46,6 +46,8 @@ export default function AddWatermarkPage() {
 
     try {
       const outputPath = `${inputFolderPath}/output`
+      // const result = await window.electron.ipcRenderer.invoke('process-watermark-batch', outputPath)
+      // console.log(result)
 
       const result = await window.electron.ipcRenderer.invoke('process-watermark-batch', {
         inputFolder: inputFolderPath,
@@ -53,10 +55,12 @@ export default function AddWatermarkPage() {
         watermarkText: watermarkText.trim(),
         videoFiles: videoFiles
       })
-
+      console.log(result)
       if (result.success) {
-        setProcessedFiles(result.processedFiles)
-        setStatusMessage(`Successfully processed ${result.processedFiles.length} videos`)
+        setProcessedFiles(result.results || [])
+        setStatusMessage(
+          `Successfully processed ${result.results ? result.results.filter((r) => r.status === 'success').length : 0} videos`
+        )
         setStatusType('success')
         setProgress(100)
       } else {
@@ -238,7 +242,7 @@ export default function AddWatermarkPage() {
           )}
         </div>
 
-        {processedFiles.length > 0 && (
+        {/* {processedFiles.length > 0 && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <h3 className="text-lg font-medium text-green-800 mb-2">✅ Processing Complete!</h3>
             <p className="text-green-700 mb-3">
@@ -258,7 +262,7 @@ export default function AddWatermarkPage() {
               <span>Open Output Folder</span>
             </button>
           </div>
-        )}
+        )} */}
       </main>
     </div>
   )

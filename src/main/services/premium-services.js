@@ -1,4 +1,3 @@
-import { machineId } from 'node-machine-id'
 import api from '../utils/api'
 import { getDeviceFingerprint } from './get-device-fingerprint'
 export const validatePremiumKey = async (apiKey) => {

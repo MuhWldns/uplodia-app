@@ -3,7 +3,7 @@ import { app } from 'electron'
 import path, { resolve } from 'path'
 import fs from 'fs'
 import chalk from 'chalk'
-import { __dirname } from '../utils/esm-path'
+
 import { error } from 'console'
 import { supabase } from './supabase/SupabaseClient'
 import { getDeviceFingerprint } from './get-device-fingerprint'
@@ -39,36 +39,36 @@ const log = (level, message, sender = null) => {
     })
   }
 }
-const processWatermark = async (inputPath, outputDir, watermarkText, sender) => {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(path.join(__dirname, 'worker', 'watermark.worker.js'), {
-      workerData: { inputPath, outputDir, watermarkText }
-    })
-    log('start', `menambahkan watermark ke ${path.basename(inputPath)}`, sender)
-    worker.on('message', (msg) => {
-      if (msg.succes) {
-        log('success', `watermark selesai untuk ${path.basename(inputPath)}`, sender)
-        resolve(message.outputPath)
-      } else {
-        log(
-          'error',
-          `Gagal menambahkan watermark ke ${path.basename(inputPath)}: ${msg.error}`,
-          sender
-        )
-        reject(new Error(msg.error))
-      }
-    })
-    worker.on('error', (err) => {
-      log('error', `Error pada worker: ${error.message}`, sender)
-      reject(err)
-    })
-    worker.on('exit', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Worker stop with exit code ${code}`))
-      }
-    })
-  })
-}
+// const processWatermark = async (inputPath, outputDir, watermarkText, sender) => {
+//   return new Promise((resolve, reject) => {
+//     const worker = new Worker(path.join(__dirname, 'worker', 'watermark.worker.js'), {
+//       workerData: { inputPath, outputDir, watermarkText }
+//     })
+//     log('start', `menambahkan watermark ke ${path.basename(inputPath)}`, sender)
+//     worker.on('message', (msg) => {
+//       if (msg.succes) {
+//         log('success', `watermark selesai untuk ${path.basename(inputPath)}`, sender)
+//         resolve(message.outputPath)
+//       } else {
+//         log(
+//           'error',
+//           `Gagal menambahkan watermark ke ${path.basename(inputPath)}: ${msg.error}`,
+//           sender
+//         )
+//         reject(new Error(msg.error))
+//       }
+//     })
+//     worker.on('error', (err) => {
+//       log('error', `Error pada worker: ${error.message}`, sender)
+//       reject(err)
+//     })
+//     worker.on('exit', (code) => {
+//       if (code !== 0) {
+//         reject(new Error(`Worker stop with exit code ${code}`))
+//       }
+//     })
+//   })
+// }
 
 export const tiktokAutoUpload = async (folderPath, sender, selectedSession, apiKey) => {
   if (!selectedSession) {
@@ -159,7 +159,7 @@ export const tiktokAutoUpload = async (folderPath, sender, selectedSession, apiK
         if (response.data.message.includes('Batas Harian')) {
           log(
             'error',
-            'Limit upload harian tercapai. Proses dihentikan. Hubungi Developer untuk unlock limit',
+            'Limit upload harian tercapai. Proses dihentikan. Hubungi Developer untuk unlock limit \n wa.me/089662443648',
             sender
           )
           break

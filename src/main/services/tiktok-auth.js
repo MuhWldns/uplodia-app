@@ -1,9 +1,10 @@
 import path from 'path'
 import { chromium } from 'playwright'
-import { __dirname } from '../utils/esm-path.js'
+
 import fs from 'fs'
 import { app } from 'electron'
 import { error } from 'console'
+import { fileURLToPath } from 'url'
 
 export const userAuth = async (accountId) => {
   if (!accountId) {
