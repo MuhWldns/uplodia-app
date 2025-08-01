@@ -63,42 +63,53 @@ export default function AddWatermarkPage() {
         )
         setStatusType('success')
         setProgress(100)
+        setIsProcessing(false)
       } else {
         setStatusMessage(`Processing failed: ${result.message}`)
         setStatusType('error')
       }
     } catch (error) {
-      console.error('Error processing watermark:', error)
-      setStatusMessage(`Processing failed: ${error.message}`)
+      console.error('Error processing watermark:')
+      setStatusMessage(`Processing failed: ${message}`)
       setStatusType('error')
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handleOpenOutputFolder = async () => {
-    if (inputFolderPath) {
-      const outputPath = `${inputFolderPath}/output`
-      try {
-        await window.electron.ipcRenderer.invoke('open-folder', outputPath)
-      } catch (error) {
-        console.error('Error opening folder:', error)
-        setStatusMessage('Failed to open output folder')
-        setStatusType('error')
-      }
-    }
-  }
+  // const handleOpenOutputFolder = async () => {
+  //   if (inputFolderPath) {
+  //     const outputPath = `${inputFolderPath}/output`
+  //     try {
+  //       await window.electron.ipcRenderer.invoke('open-folder', outputPath)
+  //     } catch (error) {
+  //       console.error('Error opening folder:', error)
+  //       setStatusMessage('Failed to open output folder')
+  //       setStatusType('error')
+  //     }
+  //   }
+  // }
 
   useEffect(() => {
     const handleWatermarkLog = (event, { level, message, progress: progressValue }) => {
+      console.log('watermark-log event received:', { level, message })
       setLogs((prev) => [
         ...prev,
         {
           level,
           message,
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ])
+
+      if (message.includes('Selesai:')) {
+        setIsProcessing(false)
+        setStatusMessage('Selesai')
+      }
+      if (level === 'error') {
+        setIsProcessing(false)
+        setStatusMessage(message)
+      }
 
       if (progressValue !== undefined) {
         setProgress(progressValue)
@@ -187,7 +198,7 @@ export default function AddWatermarkPage() {
           </button>
         </div>
 
-        {isProcessing && (
+        {/* {isProcessing && (
           <div className="mb-6">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -197,7 +208,7 @@ export default function AddWatermarkPage() {
             </div>
             <p className="text-sm text-gray-600 mt-2 text-center">{progress}% complete</p>
           </div>
-        )}
+        )} */}
 
         {statusMessage && (
           <p
@@ -224,19 +235,7 @@ export default function AddWatermarkPage() {
             logs.map((log, index) => (
               <div key={index} className="mb-1">
                 <span className="text-gray-400 text-xs">[{log.timestamp}]</span>{' '}
-                <span
-                  className={
-                    log.level === 'error'
-                      ? 'text-red-400'
-                      : log.level === 'success'
-                        ? 'text-green-400'
-                        : log.level === 'progress'
-                          ? 'text-blue-400'
-                          : 'text-yellow-400'
-                  }
-                >
-                  {log.message}
-                </span>
+                <span className="text-white">{log.message}</span>
               </div>
             ))
           )}

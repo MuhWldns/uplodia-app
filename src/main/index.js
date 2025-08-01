@@ -4,10 +4,8 @@ import pkg from 'electron-store'
 import path, { join, resolve } from 'path'
 import forkPath from '../main/services/child/addwatermark.child.js?modulePath'
 import fs from 'fs'
-import { fork } from 'child_process'
 import updaterModule from 'electron-updater'
 const updater = updaterModule.autoUpdater
-
 import { promises as fsPromises } from 'fs'
 import { supabase } from './services/supabase/SupabaseClient.js'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -28,10 +26,10 @@ import { fileURLToPath } from 'url'
 // import { calledWorker } from './services/watermark.js'
 import os from 'os'
 import Ffmpeg from 'fluent-ffmpeg'
-
 import { rejects } from 'assert'
 // const __filename = fileURLToPath(import.meta.url)
 // const __dirname = path.dirname(__filename)
+const machineID = await getDeviceFingerprint()
 let mainWindow
 const Store = pkg.default || pkg
 const store = new Store()
@@ -184,6 +182,15 @@ app.whenReady().then(() => {
       const limit = pLimit(limitCount)
 
       try {
+        const { success, data: premiumData } = await getPremiumFromStorage(store)
+        console.log(success)
+        if (!success || !premiumData.isPremium) {
+          event.sender.send('watermark-log', {
+            level: 'error',
+            message: 'Fitur ini hanya tersedia untuk pengguna premium.'
+          })
+          return
+        }
         const results = await Promise.allSettled(
           videoFiles.map((filename, idx) =>
             limit(
@@ -208,11 +215,11 @@ app.whenReady().then(() => {
                     ffmpegPath
                   })
 
-                  // Handle pesan dari child
                   port2.on('message', (e) => {
                     const data = e.data
-                    // Kirim log ke renderer
+
                     event.sender.send('watermark-log', {
+                      sucess: true,
                       fileName: filename,
                       index: idx + 1,
                       total: videoFiles.length,
