@@ -6,6 +6,6 @@ out
 .eslintcache
 *.log*
 .env
-resources/
+/resources/
 .vscode
 
