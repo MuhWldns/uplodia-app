@@ -75,7 +75,7 @@ async function run(port) {
 
     try {
       const resultPath = await addWatermark(port, inputPath, outputDir, watermarkText, ffmpegPath)
-      // ✅ IMPROVEMENT: Kirim pesan sukses yang jelas
+
       port.postMessage({
         type: 'success',
         outputPath: resultPath,
