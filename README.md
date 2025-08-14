@@ -1,8 +1,3 @@
-> ## 📢 **Pemberitahuan: Proyek Sedang Dalam Maintenance**
->
-> Saat ini, repository ini sedang dalam proses maintenance dan perbaikan besar. Beberapa fitur mungkin tidak berfungsi dan **semua rilis (releases) telah dihapus sementara**.
->
-> Kami mohon maaf atas ketidaknyamanannya dan akan memberikan update setelah maintenance selesai. Terima kasih atas pengertian Anda.
 
 
 
@@ -19,13 +14,14 @@
 ## ✅ Fitur Utama
 - ✅ **Login sekali, simpan sesi** – gak perlu login ulang tiap kali
 - ✅ **Multi-akun** – tinggal pilih akun mana yang mau dipakai
+- ✅ **Watermark adder** – Menambahkan watermark ke banyak video
 - ✅ **Upload banyak video sekaligus** – pilih folder, biar app yang kerjain
 - ✅ **UI simpel & ringan**
 
 ---
 
 ## 📥 Download
-👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/download/v1.0.0/uplodia-app.zip)**
+👉 **[Klik di sini untuk download versi terbaru](https://github.com/MuhWldns/uplodia-app/releases/download/v.0.0.2/com.uplodia.app-0.0.2-setup.exe)**
 
 ⚠ **Catatan untuk Windows**:
 - Jika muncul **“Windows protected your PC”**, klik:  
